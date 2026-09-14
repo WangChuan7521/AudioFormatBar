@@ -38,6 +38,7 @@ rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 cp "$UNIVERSAL_BINARY" "$MACOS_DIR/$APP_NAME"
 cp "$ROOT_DIR/Resources/Info.plist" "$CONTENTS_DIR/Info.plist"
+cp "$ROOT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
 
 codesign --force --deep --sign - "$APP_DIR" >/dev/null
 
@@ -50,9 +51,15 @@ ditto \
     "$APP_DIR" \
     "$OUTPUT_DIR/$ZIP_NAME"
 
+DMG_STAGING="$BUILD_ROOT/dmg-staging"
+rm -rf "$DMG_STAGING"
+mkdir -p "$DMG_STAGING"
+cp -R "$APP_DIR" "$DMG_STAGING/$APP_NAME.app"
+ln -s /Applications "$DMG_STAGING/Applications"
+
 hdiutil create \
     -volname "$APP_NAME" \
-    -srcfolder "$APP_DIR" \
+    -srcfolder "$DMG_STAGING" \
     -ov \
     -format UDZO \
     "$OUTPUT_DIR/$DMG_NAME" >/dev/null

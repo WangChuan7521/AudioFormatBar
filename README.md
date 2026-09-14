@@ -28,12 +28,28 @@ macOS 26 菜单栏音频输出格式监视器 Demo。本demo完全由DeepSeek V4
 - 不提供高级诊断视图。
 - Demo 阶段使用 1 秒轮询；后续可替换为 CoreAudio 属性监听。
 
-## 构建
+## 安装
+
+下载 Release 中的 DMG，打开后把 `AudioFormatBar.app` 拖入 `Applications`。
+
+也可以在本地构建：
 
 ```bash
 ./scripts/build-app.sh
 open dist/AudioFormatBar.app
 ```
+
+发布版通用二进制：
+
+```bash
+./scripts/build-release.sh
+```
+
+## 开机自启
+
+应用安装到 `Applications` 后，弹窗内会出现“开机自启”开关。
+
+该功能使用 macOS 的 `SMAppService.mainApp`。如果系统提示需要批准，应用内会提供“打开系统设置”按钮。
 
 ## 说明
 

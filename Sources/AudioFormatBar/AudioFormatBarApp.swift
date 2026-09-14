@@ -1,5 +1,6 @@
 import AppKit
 import Darwin
+import ServiceManagement
 import SwiftUI
 
 @main
@@ -20,9 +21,53 @@ struct AudioFormatBarApp: App {
             exit(EXIT_SUCCESS)
         }
 
+        if CommandLine.arguments.contains("--login-item-status") {
+            print(Self.loginItemStatusText)
+            exit(EXIT_SUCCESS)
+        }
+
+        if CommandLine.arguments.contains("--enable-login-item") {
+            do {
+                try SMAppService.mainApp.register()
+                print(Self.loginItemStatusText)
+                exit(EXIT_SUCCESS)
+            } catch {
+                fputs("Unable to enable login item: \(error.localizedDescription)\n", stderr)
+                exit(EXIT_FAILURE)
+            }
+        }
+
+        if CommandLine.arguments.contains("--disable-login-item") {
+            do {
+                if SMAppService.mainApp.status != .notRegistered {
+                    try SMAppService.mainApp.unregister()
+                }
+                print(Self.loginItemStatusText)
+                exit(EXIT_SUCCESS)
+            } catch {
+                fputs("Unable to disable login item: \(error.localizedDescription)\n", stderr)
+                exit(EXIT_FAILURE)
+            }
+        }
+
         let model = AudioFormatBarModel()
         _model = StateObject(wrappedValue: model)
         model.start()
+    }
+
+    private static var loginItemStatusText: String {
+        switch SMAppService.mainApp.status {
+        case .enabled:
+            return "enabled"
+        case .requiresApproval:
+            return "requires-approval"
+        case .notRegistered:
+            return "not-registered"
+        case .notFound:
+            return "not-found"
+        @unknown default:
+            return "unknown"
+        }
     }
 
     private static func dumpCoreAudioSnapshot() {
@@ -81,8 +126,4 @@ struct AudioFormatBarApp: App {
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApplication.shared.setActivationPolicy(.accessory)
-    }
-}
+final class AppDelegate: NSObject, NSApplicationDelegate {}

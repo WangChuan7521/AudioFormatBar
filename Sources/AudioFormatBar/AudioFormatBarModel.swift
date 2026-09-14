@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import Foundation
+import ServiceManagement
 
 @MainActor
 final class AudioFormatBarModel: ObservableObject {
@@ -9,6 +10,9 @@ final class AudioFormatBarModel: ObservableObject {
     @Published private(set) var pinnedDeviceUID: String?
     @Published private(set) var lastRefreshError: String?
     @Published private(set) var sourceSnapshot: AudioSourceSnapshot?
+    @Published private(set) var launchAtLoginEnabled = false
+    @Published private(set) var launchAtLoginRequiresApproval = false
+    @Published private(set) var launchAtLoginError: String?
 
     private let reader = CoreAudioReader()
     private let sourceCoordinator = AudioSourceCoordinator()
@@ -33,6 +37,7 @@ final class AudioFormatBarModel: ObservableObject {
     func start() {
         guard timer == nil else { return }
         sourceCoordinator.start()
+        refreshLaunchAtLoginStatus()
         refresh()
 
         let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -55,6 +60,55 @@ final class AudioFormatBarModel: ObservableObject {
         snapshot = coreAudioSnapshot
         sourceSnapshot = sourceCoordinator.snapshot(coreAudio: coreAudioSnapshot)
         lastRefreshError = nil
+    }
+
+    var isInstalledInApplications: Bool {
+        Bundle.main.bundleURL.path.hasPrefix("/Applications/")
+    }
+
+    var launchAtLoginStatusText: String {
+        if !isInstalledInApplications {
+            return "请先安装到 Applications"
+        }
+        if launchAtLoginRequiresApproval {
+            return "需要在系统设置中批准"
+        }
+        if let launchAtLoginError {
+            return launchAtLoginError
+        }
+        return launchAtLoginEnabled ? "已开启" : "未开启"
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        guard isInstalledInApplications else {
+            launchAtLoginError = "请先把应用拖入 Applications 文件夹"
+            launchAtLoginEnabled = false
+            return
+        }
+
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else if SMAppService.mainApp.status == .enabled
+                        || SMAppService.mainApp.status == .requiresApproval {
+                try SMAppService.mainApp.unregister()
+            }
+            launchAtLoginError = nil
+        } catch {
+            launchAtLoginError = error.localizedDescription
+        }
+
+        refreshLaunchAtLoginStatus()
+    }
+
+    func refreshLaunchAtLoginStatus() {
+        let status = SMAppService.mainApp.status
+        launchAtLoginEnabled = status == .enabled
+        launchAtLoginRequiresApproval = status == .requiresApproval
+    }
+
+    func openLoginItemsSettings() {
+        SMAppService.openSystemSettingsLoginItems()
     }
 
     func selectDevice(_ device: AudioOutputDeviceSnapshot) {

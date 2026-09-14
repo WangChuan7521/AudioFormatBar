@@ -12,6 +12,7 @@ struct MenuContentView: View {
                     currentDeviceCard
                     sourceCard
                     deviceSection
+                    launchAtLoginSection
                     footer
                 }
                 .padding(16)
@@ -403,6 +404,60 @@ struct MenuContentView: View {
             model.isFollowingAutomatically ? Color.blue.opacity(0.10) : Color.primary.opacity(0.035),
             in: .rect(cornerRadius: 14)
         )
+    }
+
+    private var launchAtLoginSection: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(spacing: 10) {
+                Image(systemName: "power.circle.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(model.launchAtLoginEnabled ? .green : .secondary)
+                    .frame(width: 27)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("开机自启")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    Text(model.launchAtLoginStatusText)
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Toggle(
+                    "",
+                    isOn: Binding(
+                        get: { model.launchAtLoginEnabled },
+                        set: { model.setLaunchAtLogin($0) }
+                    )
+                )
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .disabled(!model.isInstalledInApplications)
+            }
+
+            if model.launchAtLoginRequiresApproval {
+                HStack {
+                    Text("系统设置中仍需允许该应用作为登录项运行。")
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    Button("打开系统设置") {
+                        model.openLoginItemsSettings()
+                    }
+                    .buttonStyle(.glass)
+                }
+            } else if !model.isInstalledInApplications {
+                Text("当前从开发目录运行。将 App 拖入 Applications 后即可启用开机自启。")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(13)
+        .glassEffect(.clear, in: .rect(cornerRadius: 18))
     }
 
     private var footer: some View {

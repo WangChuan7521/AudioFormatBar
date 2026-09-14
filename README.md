@@ -1,6 +1,6 @@
 # AudioFormatBar
 
-macOS 26 菜单栏音频输出格式监视器 Demo。
+macOS 26 菜单栏音频输出格式监视器 Demo。本demo完全由DeepSeek V4.1F制作并发布，感谢鲸鱼小姐。
 
 ## 当前功能
 

@@ -351,7 +351,7 @@ struct MenuContentView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(
                 "输出设备",
-                detail: "刷新于 \(model.refreshTimestamp)"
+                detail: "更新于 \(model.refreshTimestamp)"
             )
 
             VStack(spacing: 7) {

@@ -40,11 +40,12 @@ final class AudioFormatBarModel: ObservableObject {
         refreshLaunchAtLoginStatus()
         refresh()
 
-        let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 5.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.refresh()
             }
         }
+        timer.tolerance = 2.0
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
     }
@@ -57,8 +58,18 @@ final class AudioFormatBarModel: ObservableObject {
 
     func refresh() {
         let coreAudioSnapshot = reader.snapshot()
-        snapshot = coreAudioSnapshot
-        sourceSnapshot = sourceCoordinator.snapshot(coreAudio: coreAudioSnapshot)
+        let deviceInformationChanged = coreAudioSnapshot.devices != snapshot.devices
+            || coreAudioSnapshot.defaultOutputDeviceID != snapshot.defaultOutputDeviceID
+
+        if deviceInformationChanged {
+            snapshot = coreAudioSnapshot
+        }
+
+        let newSourceSnapshot = sourceCoordinator.snapshot(coreAudio: coreAudioSnapshot)
+        if newSourceSnapshot != sourceSnapshot {
+            sourceSnapshot = newSourceSnapshot
+        }
+
         lastRefreshError = nil
     }
 
